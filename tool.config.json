@@ -1,0 +1,11 @@
+{
+  "id": "replace-this-tool-id",
+  "name": "Replace This Tool Name",
+  "description": "この説明文を置き換えてください。",
+  "owner": "omoch1-2357",
+  "repo": "replace-this-repo-name",
+  "portalUrl": "https://omoch1-2357.github.io/tools-portal/",
+  "tags": ["sample"],
+  "visible": true,
+  "sortOrder": 100
+}

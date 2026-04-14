@@ -9,7 +9,7 @@ function getDocumentRef(user: User) {
     throw new Error("Firestore が利用できません。");
   }
 
-  return doc(db, "users", user.uid, "apps", currentTool.id);
+  return doc(db, "users", user.uid, "apps", currentTool.toolId);
 }
 
 export async function fetchCloudState(user: User): Promise<ToolState> {
@@ -18,9 +18,9 @@ export async function fetchCloudState(user: User): Promise<ToolState> {
 
   return {
     draft: typeof data?.draft === "string" ? data.draft : "",
-    updatedAt:
-      typeof data?.updatedAt?.toDate === "function"
-        ? data.updatedAt.toDate().toISOString()
+    draftUpdatedAt:
+      typeof data?.draftUpdatedAt?.toDate === "function"
+        ? data.draftUpdatedAt.toDate().toISOString()
         : null,
   };
 }
@@ -30,7 +30,7 @@ export async function saveCloudState(user: User, state: ToolState) {
     getDocumentRef(user),
     {
       draft: state.draft,
-      updatedAt: serverTimestamp(),
+      draftUpdatedAt: serverTimestamp(),
     },
     { merge: true },
   );

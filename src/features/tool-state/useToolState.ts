@@ -19,11 +19,12 @@ type UseToolStateResult = {
 
 const emptyState: ToolState = {
   draft: "",
-  updatedAt: null,
+  draftUpdatedAt: null,
 };
 
 export function useToolState(user: User | null, authEnabled: boolean): UseToolStateResult {
   const [state, setState] = useState<ToolState>(emptyState);
+  const [localStateCache, setLocalStateCache] = useState<ToolState>(emptyState);
   const [loading, setLoading] = useState(authEnabled);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,8 +33,13 @@ export function useToolState(user: User | null, authEnabled: boolean): UseToolSt
     let active = true;
 
     async function load() {
+      const nextLocalState = loadLocalState();
+      if (active) {
+        setLocalStateCache(nextLocalState);
+      }
+
       if (!user) {
-        setState(loadLocalState());
+        setState(nextLocalState);
         setLoading(false);
         return;
       }
@@ -73,14 +79,18 @@ export function useToolState(user: User | null, authEnabled: boolean): UseToolSt
     setState(nextState);
 
     if (!user) {
-      saveLocalState(nextState);
+      if (!saveLocalState(nextState)) {
+        setError("この環境ではローカル保存できませんでした。");
+      } else {
+        setLocalStateCache(nextState);
+      }
     }
   }
 
   async function save() {
     const nextState = {
       ...state,
-      updatedAt: new Date().toISOString(),
+      draftUpdatedAt: new Date().toISOString(),
     };
 
     setSaving(true);
@@ -91,7 +101,10 @@ export function useToolState(user: User | null, authEnabled: boolean): UseToolSt
       if (user) {
         await saveCloudState(user, nextState);
       } else {
-        saveLocalState(nextState);
+        if (!saveLocalState(nextState)) {
+          throw new Error("この環境ではローカル保存できませんでした。");
+        }
+        setLocalStateCache(nextState);
       }
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "保存できませんでした。");
@@ -105,8 +118,7 @@ export function useToolState(user: User | null, authEnabled: boolean): UseToolSt
       return;
     }
 
-    const localState = loadLocalState();
-    if (!localState.draft && !localState.updatedAt) {
+    if (!localStateCache.draft && !localStateCache.draftUpdatedAt) {
       return;
     }
 
@@ -114,9 +126,10 @@ export function useToolState(user: User | null, authEnabled: boolean): UseToolSt
     setError(null);
 
     try {
-      await saveCloudState(user, localState);
-      setState(localState);
+      await saveCloudState(user, localStateCache);
+      setState(localStateCache);
       clearLocalState();
+      setLocalStateCache(emptyState);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "同期できませんでした。");
     } finally {
@@ -126,25 +139,34 @@ export function useToolState(user: User | null, authEnabled: boolean): UseToolSt
 
   async function reset() {
     const nextState = emptyState;
-    setState(nextState);
 
     if (!user) {
       clearLocalState();
+      setLocalStateCache(emptyState);
+      setState(nextState);
       return;
     }
 
-    await saveCloudState(user, nextState);
+    setSaving(true);
+    setError(null);
+
+    try {
+      await saveCloudState(user, nextState);
+      setState(nextState);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "リセットできませんでした。");
+    } finally {
+      setSaving(false);
+    }
   }
 
   const lastSavedLabel = useMemo(() => {
-    if (!state.updatedAt) {
+    if (!state.draftUpdatedAt) {
       return "未保存";
     }
 
-    return new Date(state.updatedAt).toLocaleString("ja-JP");
-  }, [state.updatedAt]);
-
-  const localState = loadLocalState();
+    return new Date(state.draftUpdatedAt).toLocaleString("ja-JP");
+  }, [state.draftUpdatedAt]);
 
   return {
     state,
@@ -154,7 +176,7 @@ export function useToolState(user: User | null, authEnabled: boolean): UseToolSt
     setDraft,
     save,
     syncLocalToCloud,
-    hasLocalData: Boolean(localState.draft || localState.updatedAt),
+    hasLocalData: Boolean(localStateCache.draft || localStateCache.draftUpdatedAt),
     lastSavedLabel,
     reset,
   };

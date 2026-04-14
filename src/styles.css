@@ -90,6 +90,12 @@ a {
   color: var(--text-subtle);
 }
 
+.template-warning {
+  margin: 16px 0 0;
+  color: #9b2c2c;
+  font-weight: 600;
+}
+
 .hero__panel,
 .panel {
   padding: 24px;

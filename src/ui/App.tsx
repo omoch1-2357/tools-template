@@ -25,6 +25,9 @@ export function App() {
           <p className="eyebrow">TOOL TEMPLATE</p>
           <h1>{currentTool.name}</h1>
           <p className="hero__body">{currentTool.description}</p>
+          {currentTool.configIssues.length > 0 ? (
+            <p className="template-warning">{currentTool.configIssues.join(" ")}</p>
+          ) : null}
         </div>
 
         <div className="hero__panel">
@@ -102,7 +105,7 @@ export function App() {
             </div>
             <div className="meta-row">
               <span className="muted">リポジトリ</span>
-              <strong>{currentTool.owner}/{currentTool.repo}</strong>
+              <strong>{currentTool.fullRepo}</strong>
             </div>
             <div className="meta-row">
               <span className="muted">タグ</span>

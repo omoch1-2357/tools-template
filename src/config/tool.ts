@@ -35,19 +35,30 @@ function getRuntimeRepoName() {
 const owner = getGitHubOwner();
 const runtimeRepoName = getRuntimeRepoName();
 const namespace =
-  "namespace" in toolConfig && typeof toolConfig.namespace === "string" && toolConfig.namespace.trim().length > 0
+  "namespace" in toolConfig &&
+  typeof toolConfig.namespace === "string" &&
+  toolConfig.namespace.trim().length > 0
     ? toolConfig.namespace.trim()
     : null;
-const configuredOwner = "owner" in toolConfig && isFilledValue(toolConfig.owner) ? toolConfig.owner : null;
+const configuredOwner =
+  "owner" in toolConfig && isFilledValue(toolConfig.owner) ? toolConfig.owner : null;
 const resolvedOwner = configuredOwner ?? owner;
-const repo = isFilledValue(toolConfig.repo) ? toolConfig.repo : runtimeRepoName ?? toolConfig.repo;
+const repo = isFilledValue(toolConfig.repo)
+  ? toolConfig.repo
+  : (runtimeRepoName ?? toolConfig.repo);
 const id = isFilledValue(toolConfig.id) ? toolConfig.id : repo;
 const configIssues = [
   !namespace ? "`tool.config.json` の `namespace` を固定値で指定してください。" : null,
   !isFilledValue(toolConfig.id) ? "`tool.config.json` の `id` を固有値に変更してください。" : null,
-  !configuredOwner && !owner ? "`tool.config.json` の `owner` を実際の owner に変更してください。" : null,
-  !isFilledValue(toolConfig.repo) ? "`tool.config.json` の `repo` を実際の repo 名に変更してください。" : null,
-  !isFilledValue(toolConfig.name) ? "`tool.config.json` の `name` を実際のツール名に変更してください。" : null,
+  !configuredOwner && !owner
+    ? "`tool.config.json` の `owner` を実際の owner に変更してください。"
+    : null,
+  !isFilledValue(toolConfig.repo)
+    ? "`tool.config.json` の `repo` を実際の repo 名に変更してください。"
+    : null,
+  !isFilledValue(toolConfig.name)
+    ? "`tool.config.json` の `name` を実際のツール名に変更してください。"
+    : null,
 ].filter((value): value is string => value !== null);
 
 export const currentTool = {

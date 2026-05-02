@@ -1,5 +1,6 @@
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { useEffect, useState } from "react";
+
 import { auth, isFirebaseConfigured } from "../../lib/firebase/client";
 
 type AuthState = {
@@ -14,7 +15,6 @@ export function useAuthState(): AuthState {
 
   useEffect(() => {
     if (!auth) {
-      setLoading(false);
       return;
     }
 

@@ -1,5 +1,6 @@
 import type { User } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+
 import { currentTool } from "../../config/tool";
 import { db } from "../../lib/firebase/client";
 import type { ToolState } from "./types";

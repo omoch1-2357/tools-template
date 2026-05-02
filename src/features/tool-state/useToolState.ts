@@ -1,5 +1,6 @@
 import type { User } from "firebase/auth";
 import { useEffect, useMemo, useState } from "react";
+
 import { clearLocalState, loadLocalState, saveLocalState } from "./storage";
 import { fetchCloudState, saveCloudState } from "./toolStateService";
 import type { ToolState } from "./types";
@@ -54,7 +55,9 @@ export function useToolState(user: User | null, authEnabled: boolean): UseToolSt
         setError(null);
       } catch (nextError) {
         if (active) {
-          setError(nextError instanceof Error ? nextError.message : "データを読み込めませんでした。");
+          setError(
+            nextError instanceof Error ? nextError.message : "データを読み込めませんでした。",
+          );
         }
       } finally {
         if (active) {

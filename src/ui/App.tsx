@@ -42,10 +42,16 @@ export function App() {
               <p className="muted">認証状態を確認中です。</p>
             ) : user ? (
               <>
-                <p className="auth-box__title">{user.displayName ?? user.email ?? "ログイン済み"}</p>
+                <p className="auth-box__title">
+                  {user.displayName ?? user.email ?? "ログイン済み"}
+                </p>
                 <p className="muted">GitHub アカウントで同期できます。</p>
                 <div className="button-row">
-                  <button className="secondary-button" onClick={syncLocalToCloud} disabled={!hasLocalData || saving}>
+                  <button
+                    className="secondary-button"
+                    onClick={syncLocalToCloud}
+                    disabled={!hasLocalData || saving}
+                  >
                     ローカル内容を同期
                   </button>
                   <button className="secondary-button" onClick={signOutUser}>
@@ -57,10 +63,16 @@ export function App() {
               <>
                 <p className="auth-box__title">未ログインでも使えます。</p>
                 <p className="muted">別端末でも使いたいときだけ GitHub でログインしてください。</p>
-                <button className="primary-button" onClick={signInWithGitHub} disabled={!authEnabled}>
+                <button
+                  className="primary-button"
+                  onClick={signInWithGitHub}
+                  disabled={!authEnabled}
+                >
                   GitHub でログイン
                 </button>
-                {!authEnabled ? <p className="notice">Firebase 設定未投入のため認証は無効です。</p> : null}
+                {!authEnabled ? (
+                  <p className="notice">Firebase 設定未投入のため認証は無効です。</p>
+                ) : null}
               </>
             )}
           </div>

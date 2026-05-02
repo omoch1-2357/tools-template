@@ -1,4 +1,5 @@
 import { GithubAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+
 import { auth, isFirebaseConfigured } from "../../lib/firebase/client";
 
 const provider = new GithubAuthProvider();

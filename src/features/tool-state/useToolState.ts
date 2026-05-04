@@ -1,6 +1,6 @@
-import type { User } from "firebase/auth";
 import { useEffect, useMemo, useState } from "react";
 
+import type { AuthUser } from "../auth/types";
 import { clearLocalState, loadLocalState, saveLocalState } from "./storage";
 import { fetchCloudState, saveCloudState } from "./toolStateService";
 import type { ToolState } from "./types";
@@ -23,7 +23,7 @@ const emptyState: ToolState = {
   draftUpdatedAt: null,
 };
 
-export function useToolState(user: User | null, authEnabled: boolean): UseToolStateResult {
+export function useToolState(user: AuthUser | null, authEnabled: boolean): UseToolStateResult {
   const [state, setState] = useState<ToolState>(emptyState);
   const [localStateCache, setLocalStateCache] = useState<ToolState>(emptyState);
   const [loading, setLoading] = useState(authEnabled);

@@ -1,38 +1,42 @@
-import type { User } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 
 import { currentTool } from "../../config/tool";
 import { db } from "../../lib/firebase/client";
+import { timestampToIso } from "../../lib/firebase/firestoreData";
+import type { AuthUser } from "../auth/types";
 import type { ToolState } from "./types";
 
-function getDocumentRef(user: User) {
+export function userToolStateDocumentPath(uid: string, toolId: string) {
+  return ["users", uid, "apps", toolId] as [string, string, string, string];
+}
+
+export function mapToolStateData(data: Record<string, unknown> | undefined): ToolState {
+  return {
+    draft: typeof data?.draft === "string" ? data.draft : "",
+    draftUpdatedAt: timestampToIso(data?.draftUpdatedAt) ?? null,
+  };
+}
+
+export function toolStateWriteData(state: ToolState, draftUpdatedAt: unknown) {
+  return {
+    draft: state.draft,
+    draftUpdatedAt,
+  };
+}
+
+function getDocumentRef(user: AuthUser) {
   if (!db) {
     throw new Error("Firestore が利用できません。");
   }
 
-  return doc(db, "users", user.uid, "apps", currentTool.toolId);
+  return doc(db, ...userToolStateDocumentPath(user.uid, currentTool.toolId));
 }
 
-export async function fetchCloudState(user: User): Promise<ToolState> {
+export async function fetchCloudState(user: AuthUser): Promise<ToolState> {
   const snapshot = await getDoc(getDocumentRef(user));
-  const data = snapshot.data();
-
-  return {
-    draft: typeof data?.draft === "string" ? data.draft : "",
-    draftUpdatedAt:
-      typeof data?.draftUpdatedAt?.toDate === "function"
-        ? data.draftUpdatedAt.toDate().toISOString()
-        : null,
-  };
+  return mapToolStateData(snapshot.data());
 }
 
-export async function saveCloudState(user: User, state: ToolState) {
-  await setDoc(
-    getDocumentRef(user),
-    {
-      draft: state.draft,
-      draftUpdatedAt: serverTimestamp(),
-    },
-    { merge: true },
-  );
+export async function saveCloudState(user: AuthUser, state: ToolState) {
+  await setDoc(getDocumentRef(user), toolStateWriteData(state, serverTimestamp()), { merge: true });
 }

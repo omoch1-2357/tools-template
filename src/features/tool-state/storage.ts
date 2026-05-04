@@ -1,41 +1,59 @@
 import { currentTool } from "../../config/tool";
 import type { ToolState } from "./types";
 
-const STORAGE_KEY = `tool-state:${currentTool.toolId}`;
+export const STORAGE_KEY = `tool-state:${currentTool.toolId}`;
+
+export type StorageLike = Pick<Storage, "getItem" | "removeItem" | "setItem">;
 
 const emptyState: ToolState = {
   draft: "",
   draftUpdatedAt: null,
 };
 
-function safeGetItem(key: string) {
+function getDefaultStorage(): StorageLike | null {
+  return typeof window === "undefined" ? null : window.localStorage;
+}
+
+function safeGetItem(storage: StorageLike | null, key: string) {
+  if (!storage) {
+    return null;
+  }
+
   try {
-    return window.localStorage.getItem(key);
+    return storage.getItem(key);
   } catch {
     return null;
   }
 }
 
-function safeSetItem(key: string, value: string) {
+function safeSetItem(storage: StorageLike | null, key: string, value: string) {
+  if (!storage) {
+    return false;
+  }
+
   try {
-    window.localStorage.setItem(key, value);
+    storage.setItem(key, value);
     return true;
   } catch {
     return false;
   }
 }
 
-function safeRemoveItem(key: string) {
+function safeRemoveItem(storage: StorageLike | null, key: string) {
+  if (!storage) {
+    return false;
+  }
+
   try {
-    window.localStorage.removeItem(key);
+    storage.removeItem(key);
     return true;
   } catch {
     return false;
   }
 }
 
-export function loadLocalState(): ToolState {
-  const rawValue = safeGetItem(STORAGE_KEY);
+export function loadLocalState(storage: StorageLike | null = getDefaultStorage()): ToolState {
+  const rawValue = safeGetItem(storage, STORAGE_KEY);
   if (!rawValue) {
     return emptyState;
   }
@@ -56,10 +74,13 @@ export function loadLocalState(): ToolState {
   }
 }
 
-export function saveLocalState(state: ToolState) {
-  return safeSetItem(STORAGE_KEY, JSON.stringify(state));
+export function saveLocalState(
+  state: ToolState,
+  storage: StorageLike | null = getDefaultStorage(),
+) {
+  return safeSetItem(storage, STORAGE_KEY, JSON.stringify(state));
 }
 
-export function clearLocalState() {
-  return safeRemoveItem(STORAGE_KEY);
+export function clearLocalState(storage: StorageLike | null = getDefaultStorage()) {
+  return safeRemoveItem(storage, STORAGE_KEY);
 }

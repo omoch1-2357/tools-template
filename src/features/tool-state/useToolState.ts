@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { hasToolStateContent, initialToolState } from "../../tool/toolState";
 import type { AuthUser } from "../auth/types";
 import { clearLocalState, loadLocalState, saveLocalState } from "./storage";
 import { fetchCloudState, saveCloudState } from "./toolStateService";
@@ -18,14 +19,9 @@ type UseToolStateResult = {
   reset: () => Promise<void>;
 };
 
-const emptyState: ToolState = {
-  draft: "",
-  draftUpdatedAt: null,
-};
-
 export function useToolState(user: AuthUser | null, authEnabled: boolean): UseToolStateResult {
-  const [state, setState] = useState<ToolState>(emptyState);
-  const [localStateCache, setLocalStateCache] = useState<ToolState>(emptyState);
+  const [state, setState] = useState<ToolState>(initialToolState);
+  const [localStateCache, setLocalStateCache] = useState<ToolState>(initialToolState);
   const [loading, setLoading] = useState(authEnabled);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -121,7 +117,7 @@ export function useToolState(user: AuthUser | null, authEnabled: boolean): UseTo
       return;
     }
 
-    if (!localStateCache.draft && !localStateCache.draftUpdatedAt) {
+    if (!hasToolStateContent(localStateCache)) {
       return;
     }
 
@@ -132,7 +128,7 @@ export function useToolState(user: AuthUser | null, authEnabled: boolean): UseTo
       await saveCloudState(user, localStateCache);
       setState(localStateCache);
       clearLocalState();
-      setLocalStateCache(emptyState);
+      setLocalStateCache(initialToolState);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "同期できませんでした。");
     } finally {
@@ -141,11 +137,11 @@ export function useToolState(user: AuthUser | null, authEnabled: boolean): UseTo
   }
 
   async function reset() {
-    const nextState = emptyState;
+    const nextState = initialToolState;
 
     if (!user) {
       clearLocalState();
-      setLocalStateCache(emptyState);
+      setLocalStateCache(initialToolState);
       setState(nextState);
       return;
     }
@@ -179,7 +175,7 @@ export function useToolState(user: AuthUser | null, authEnabled: boolean): UseTo
     setDraft,
     save,
     syncLocalToCloud,
-    hasLocalData: Boolean(localStateCache.draft || localStateCache.draftUpdatedAt),
+    hasLocalData: hasToolStateContent(localStateCache),
     lastSavedLabel,
     reset,
   };

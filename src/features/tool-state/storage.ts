@@ -1,14 +1,10 @@
 import { currentTool } from "../../config/tool";
+import { initialToolState } from "../../tool/toolState";
 import type { ToolState } from "./types";
 
 export const STORAGE_KEY = `tool-state:${currentTool.toolId}`;
 
 export type StorageLike = Pick<Storage, "getItem" | "removeItem" | "setItem">;
-
-const emptyState: ToolState = {
-  draft: "",
-  draftUpdatedAt: null,
-};
 
 function getDefaultStorage(): StorageLike | null {
   return typeof window === "undefined" ? null : window.localStorage;
@@ -55,7 +51,7 @@ function safeRemoveItem(storage: StorageLike | null, key: string) {
 export function loadLocalState(storage: StorageLike | null = getDefaultStorage()): ToolState {
   const rawValue = safeGetItem(storage, STORAGE_KEY);
   if (!rawValue) {
-    return emptyState;
+    return initialToolState;
   }
 
   try {
@@ -70,7 +66,7 @@ export function loadLocalState(storage: StorageLike | null = getDefaultStorage()
             : null,
     };
   } catch {
-    return emptyState;
+    return initialToolState;
   }
 }
 

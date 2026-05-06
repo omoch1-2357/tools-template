@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   isPlaceholderValue,
   parseServiceAccount,
+  parseServiceAccountJson,
   parseToolConfig,
   readGitHubRepositoryEnv,
   validateToolConfigForCatalogSync,
@@ -64,6 +65,10 @@ describe("catalog sync config", () => {
     ).toThrow("catalogMode は publish / hide / remove");
   });
 
+  it("reports the missing required tool.config.json field", () => {
+    expect(() => parseToolConfig({})).toThrow("tool.config.json の必須項目 namespace");
+  });
+
   it("reads GitHub repository metadata from env", () => {
     expect(
       readGitHubRepositoryEnv({
@@ -72,6 +77,12 @@ describe("catalog sync config", () => {
         GITHUB_EVENT_REPOSITORY_NAME: "example-tool",
       }),
     ).toEqual(repositoryEnv);
+  });
+
+  it("reports missing GitHub repository env vars", () => {
+    expect(() => readGitHubRepositoryEnv({})).toThrow(
+      "GitHub Actions の repository 情報が不足しています: GITHUB_REPOSITORY, GITHUB_REPOSITORY_OWNER, GITHUB_EVENT_REPOSITORY_NAME",
+    );
   });
 
   it("rejects placeholder values before catalog sync", () => {
@@ -120,5 +131,33 @@ describe("catalog sync config", () => {
       privateKey: "private-key",
       projectId: "firebase-project",
     });
+  });
+
+  it("rejects malformed Firebase service account values", () => {
+    expect(() => parseServiceAccount({})).toThrow(
+      "Firebase service account JSON の形式が不正です。",
+    );
+  });
+
+  it("parses Firebase service account JSON strings", () => {
+    expect(
+      parseServiceAccountJson(
+        JSON.stringify({
+          client_email: "catalog@example.iam.gserviceaccount.com",
+          private_key: "private-key",
+          project_id: "firebase-project",
+        }),
+      ),
+    ).toEqual({
+      clientEmail: "catalog@example.iam.gserviceaccount.com",
+      privateKey: "private-key",
+      projectId: "firebase-project",
+    });
+  });
+
+  it("rejects malformed Firebase service account JSON strings", () => {
+    expect(() => parseServiceAccountJson("{")).toThrow(
+      "FIREBASE_SERVICE_ACCOUNT_JSON が有効な JSON ではありません。",
+    );
   });
 });

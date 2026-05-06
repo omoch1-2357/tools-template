@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 
 import {
   loadToolConfig,
-  parseServiceAccount,
+  parseServiceAccountJson,
   readGitHubRepositoryEnv,
   validateToolConfigForCatalogSync,
 } from "./catalog-sync/config";
@@ -23,7 +23,7 @@ if (!serviceAccountJson) {
   process.exit(0);
 }
 
-const serviceAccount = parseServiceAccount(JSON.parse(serviceAccountJson));
+const serviceAccount = parseServiceAccountJson(serviceAccountJson);
 const configPath = resolve(process.cwd(), "tool.config.json");
 const config = await loadToolConfig(configPath);
 const repositoryEnv = readGitHubRepositoryEnv(process.env);

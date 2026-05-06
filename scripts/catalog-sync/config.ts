@@ -62,13 +62,33 @@ export function parseServiceAccount(value: unknown): ServiceAccount {
   };
 }
 
+export function parseServiceAccountJson(rawValue: string): ServiceAccount {
+  try {
+    return parseServiceAccount(JSON.parse(rawValue));
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error("FIREBASE_SERVICE_ACCOUNT_JSON が有効な JSON ではありません。");
+    }
+
+    throw error;
+  }
+}
+
 export function readGitHubRepositoryEnv(env: NodeJS.ProcessEnv): GitHubRepositoryEnv {
   const repository = env.GITHUB_REPOSITORY;
   const repositoryOwner = env.GITHUB_REPOSITORY_OWNER;
   const repositoryName = env.GITHUB_EVENT_REPOSITORY_NAME;
 
   if (!repository || !repositoryOwner || !repositoryName) {
-    throw new Error("GitHub Actions の repository 情報が不足しています。");
+    const missingVariables = [
+      !repository ? "GITHUB_REPOSITORY" : null,
+      !repositoryOwner ? "GITHUB_REPOSITORY_OWNER" : null,
+      !repositoryName ? "GITHUB_EVENT_REPOSITORY_NAME" : null,
+    ].filter((value): value is string => value !== null);
+
+    throw new Error(
+      `GitHub Actions の repository 情報が不足しています: ${missingVariables.join(", ")}`,
+    );
   }
 
   return {
@@ -118,7 +138,7 @@ function isCatalogMode(value: unknown): value is CatalogMode {
 function readRequiredString(value: Record<string, unknown>, key: string) {
   const fieldValue = value[key];
   if (typeof fieldValue !== "string" || fieldValue.trim().length === 0) {
-    throw new Error("tool.config.json の必須項目が不足しています。");
+    throw new Error(`tool.config.json の必須項目 ${key} が不足しています。`);
   }
 
   return fieldValue;

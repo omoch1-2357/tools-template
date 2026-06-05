@@ -1,6 +1,7 @@
 import {
+  getIdTokenResult,
   GithubAuthProvider,
-  onAuthStateChanged,
+  onIdTokenChanged,
   signInWithPopup,
   signOut,
   type User,
@@ -14,11 +15,14 @@ provider.setCustomParameters({
   allow_signup: "true",
 });
 
-export function mapFirebaseUser(user: User): AuthUser {
+export async function mapFirebaseUser(user: User, forceRefresh = false): Promise<AuthUser> {
+  const tokenResult = await getIdTokenResult(user, forceRefresh);
+
   return {
     uid: user.uid,
     displayName: user.displayName,
     email: user.email,
+    isAdmin: tokenResult.claims.admin === true,
   };
 }
 
@@ -27,9 +31,43 @@ export function subscribeAuthState(callback: (user: AuthUser | null) => void) {
     return undefined;
   }
 
-  return onAuthStateChanged(auth, (nextUser) => {
-    callback(nextUser ? mapFirebaseUser(nextUser) : null);
+  let active = true;
+  const unsubscribe = onIdTokenChanged(auth, (nextUser) => {
+    if (!nextUser) {
+      callback(null);
+      return;
+    }
+
+    void mapFirebaseUser(nextUser)
+      .then((mappedUser) => {
+        if (active) {
+          callback(mappedUser);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          callback({
+            uid: nextUser.uid,
+            displayName: nextUser.displayName,
+            email: nextUser.email,
+            isAdmin: false,
+          });
+        }
+      });
   });
+
+  return () => {
+    active = false;
+    unsubscribe();
+  };
+}
+
+export async function refreshCurrentUserClaims() {
+  if (!auth?.currentUser) {
+    return null;
+  }
+
+  return mapFirebaseUser(auth.currentUser, true);
 }
 
 export async function signInWithGitHub() {

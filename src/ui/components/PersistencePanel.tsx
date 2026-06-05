@@ -29,7 +29,11 @@ export function PersistencePanel(props: PersistencePanelProps) {
             <p className="auth-box__title">
               {props.user.displayName ?? props.user.email ?? "ログイン済み"}
             </p>
-            <p className="muted">GitHub アカウントで同期できます。</p>
+            <p className="muted">
+              {props.user.isAdmin
+                ? "Admin 権限つきの GitHub アカウントです。"
+                : "GitHub アカウントで同期できます。"}
+            </p>
             <div className="button-row">
               <button
                 className="secondary-button"

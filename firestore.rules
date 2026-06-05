@@ -1,0 +1,40 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.admin == true;
+    }
+
+    function ownsUserDocument(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    match /tools/{toolId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /learningResources/{resourceId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /learningResourcePages/{pageId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /users/{userId}/apps/{appId} {
+      allow read, write: if ownsUserDocument(userId);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
